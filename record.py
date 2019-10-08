@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import random
 import screeninfo
+import json
 from argparse import ArgumentParser
 
 # Setup logger.
@@ -27,8 +28,12 @@ class DotGenerator:
             self.last_dot = (random.randrange(5, self.width - 5),
                              random.randrange(5, self.height - 5))
             cv2.circle(self.image, self.last_dot, 5, (255, 255, 255), -1)
-            self.events_log.write(
-                    "{} {} {}\n".format(frame_count, *self.last_dot))
+            event = {
+                "frame_count": frame_count,
+                "x": self.last_dot[0], "y": self.last_dot[1],
+                "width": self.width, "height": self.height
+            }
+            self.events_log.write(json.dumps(event) + "\n")
         return self.image
 
 # Parse command line arguments.
@@ -54,7 +59,7 @@ fourcc = cv2.VideoWriter_fourcc(*'XVID')
 # FPS to anything.
 output_video = cv2.VideoWriter(
         args.output_name + '.avi', fourcc, 12, (width, height))
-events_log = open(args.output_name + '.txt', 'w')
+events_log = open(args.output_name + '.jsonl', 'w')
 
 # Create image to be shown
 screen = screeninfo.get_monitors()[args.screen_id]
