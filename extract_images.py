@@ -1,6 +1,7 @@
 import cv2
 import logging
 import json
+import os
 from argparse import ArgumentParser
 
 # Setup logger.
@@ -11,6 +12,8 @@ logger = logging.getLogger('extract_images')
 parser = ArgumentParser()
 parser.add_argument('input_name',
         help='Name of input_video/event_log file (without extension)')
+parser.add_argument('output_folder',
+        help='Name of folder for output files')
 args = parser.parse_args()
 
 # Open the input video file
@@ -33,7 +36,8 @@ while True:
     frame_to_extract = (events[current_event]["frame_count"] +
             events[current_event + 1]["frame_count"]) / 2
     if frame_count > frame_to_extract:
-        name = "{}_{}".format(args.input_name, current_event)
+        name = "{}_{}".format(os.path.join(args.output_folder,
+            os.path.basename(args.input_name)), current_event)
         cv2.imwrite(name + ".jpg", frame)
         with open(name + ".json", "w") as event_file:
             event_file.write(json.dumps(events[current_event]) + "\n")
