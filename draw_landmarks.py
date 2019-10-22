@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 # Parse command line arguments.
 parser = ArgumentParser()
 parser.add_argument('input_image',
-        help='Names of input_image file')
+        help='Name of input_image file')
 args = parser.parse_args()
 
 

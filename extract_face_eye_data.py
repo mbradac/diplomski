@@ -8,6 +8,8 @@ from argparse import ArgumentParser
 from PIL import Image, ImageDraw
 import sys
 
+EYE_IMAGE_SIZE = 64
+
 # Setup logger.
 logging.basicConfig(level='INFO')
 logger = logging.getLogger('extract_face_eye_data')
@@ -50,4 +52,6 @@ for input_name in input_names:
         min_y = y_center - dimension // 2
         max_y = y_center + (dimension + 1) // 2
         pil_image = Image.fromarray(image[min_y:max_y, min_x:max_x])
+        pil_image = pil_image.resize(
+                (EYE_IMAGE_SIZE, EYE_IMAGE_SIZE), Image.BILINEAR)
         pil_image.save(name + '_' + eye_name[0] + '.jpg')
