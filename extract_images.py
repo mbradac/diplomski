@@ -33,8 +33,9 @@ while True:
     ret, frame = input_video.read()
     if not ret or current_event + 1 == num_events:
         break
-    frame_to_extract = (events[current_event]["frame_count"] +
-            events[current_event + 1]["frame_count"]) / 2
+    start_time = events[current_event]["frame_count"]
+    end_time = events[current_event + 1]["frame_count"]
+    frame_to_extract = start_time + (end_time - start_time) * 0.75
     if frame_count > frame_to_extract:
         name = "{}_{}".format(os.path.join(args.output_folder,
             os.path.basename(args.input_name)), current_event)

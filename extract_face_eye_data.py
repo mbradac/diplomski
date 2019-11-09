@@ -48,10 +48,16 @@ for input_name in input_names:
         min_x -= x_shift
         max_x += x_shift
         dimension = max_x - min_x
+        if dimension < 64:
+            t = (64 - (max_x - min_x)) // 2
+            min_x -= t
+            max_x = min_x + 64
+            dimension = 64
         y_center = (min_y + max_y) // 2
         min_y = y_center - dimension // 2
         max_y = y_center + (dimension + 1) // 2
         pil_image = Image.fromarray(image[min_y:max_y, min_x:max_x])
-        pil_image = pil_image.resize(
-                (EYE_IMAGE_SIZE, EYE_IMAGE_SIZE), Image.BILINEAR)
+        if dimension != 64:
+            pil_image = pil_image.resize(
+                    (EYE_IMAGE_SIZE, EYE_IMAGE_SIZE), Image.BILINEAR)
         pil_image.save(name + '_' + eye_name[0] + '.jpg')

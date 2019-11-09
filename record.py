@@ -17,17 +17,17 @@ class DotGenerator:
         self.height = len(image)
         self.width = len(image[0])
         self.events_log = events_log
-        self.next_event = start_time + datetime.timedelta(seconds=2)
+        self.next_event = start_time + datetime.timedelta(seconds=1)
         # Values does not really matter since there is no dot yet.
         self.last_dot = (self.width / 2, self.height / 2)
 
     def get_image(self, current_time, frame_count):
         if current_time >= self.next_event:
-            self.next_event = current_time + datetime.timedelta(seconds=2)
-            cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
+            self.next_event = current_time + datetime.timedelta(seconds=1)
+            cv2.circle(self.image, self.last_dot, 5, (255, 255, 255), -1)
             self.last_dot = (random.randrange(5, self.width - 5),
                              random.randrange(5, self.height - 5))
-            cv2.circle(self.image, self.last_dot, 5, (255, 255, 255), -1)
+            cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
             event = {
                 "frame_count": frame_count,
                 "x": self.last_dot[0], "y": self.last_dot[1],
@@ -65,10 +65,11 @@ events_log = open(args.output_name + '.jsonl', 'w')
 screen = screeninfo.get_monitors()[args.screen_id]
 logger.info('Screen width={} height={}'.format(screen.width, screen.height))
 image = np.zeros([screen.height, screen.width, 3])
+image.fill(255)
 cv2.putText(image,
         "Wait for dots to appear and look at them. "
         "When you become bored press 'q' to quit",
-        (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
 dot_generator = DotGenerator(image, events_log, datetime.datetime.now())
 

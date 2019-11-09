@@ -69,10 +69,8 @@ ys_train, ys_test = ys[:train_size], ys[train_size:]
 
 model.fit([left_eyes_train, right_eyes_train, face_points_train],
         [ys_train],
-#        batch_size=128,
-        batch_size=1,
-#        epochs=100,
-        epochs=30,
+        batch_size=32,
+        epochs=12,
         verbose=1,
         validation_data=(
             [left_eyes_test, right_eyes_test, face_points_test], [ys_test]))
