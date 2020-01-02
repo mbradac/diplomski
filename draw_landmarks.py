@@ -22,6 +22,6 @@ for face_landmarks in face_landmarks_list:
     for landmark_name in face_landmarks:
         for dot in face_landmarks[landmark_name]:
             d.ellipse((dot[0] - 2, dot[1] - 2, dot[0] + 2, dot[1] + 2),
-                    fill=(255, 255, 255, 255))
+                    fill=(255, 0, 0, 255))
 
 pil_image.show()

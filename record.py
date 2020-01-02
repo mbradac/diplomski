@@ -11,13 +11,28 @@ from argparse import ArgumentParser
 logging.basicConfig(level='INFO')
 logger = logging.getLogger('record')
 
+def random_strategy(width, height):
+    return (random.randrange(5, width - 5),
+            random.randrange(5, height - 5))
+
+class LeftRightCenteredStrategy:
+    def __init__(self):
+        self.last_left = True
+
+    def __call__(self, width, height):
+        self.last_left = not self.last_left
+        if self.last_left:
+            return (width - 50, height / 2)
+        return (50, height / 2)
+
 class DotGenerator:
-    def __init__(self, image, events_log, start_time):
+    def __init__(self, strategy, image, events_log, start_time):
         self.image = image
         self.height = len(image)
         self.width = len(image[0])
         self.events_log = events_log
         self.next_event = start_time + datetime.timedelta(seconds=1)
+        self.strategy = strategy
         # Values does not really matter since there is no dot yet.
         self.last_dot = (self.width / 2, self.height / 2)
 
@@ -25,8 +40,7 @@ class DotGenerator:
         if current_time >= self.next_event:
             self.next_event = current_time + datetime.timedelta(seconds=1)
             cv2.circle(self.image, self.last_dot, 5, (255, 255, 255), -1)
-            self.last_dot = (random.randrange(5, self.width - 5),
-                             random.randrange(5, self.height - 5))
+            self.last_dot = self.strategy(self.width, self.height)
             cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
             event = {
                 "frame_count": frame_count,
@@ -36,10 +50,16 @@ class DotGenerator:
             self.events_log.write(json.dumps(event) + "\n")
         return self.image
 
+DOT_GENERATORS = {"lr_centered": LeftRightCenteredStrategy(),
+                  "random": random_strategy}
+
 # Parse command line arguments.
 parser = ArgumentParser()
 parser.add_argument('output_name',
         help='Name of output files (without extension)')
+parser.add_argument('dot_generator',
+        choices=list(DOT_GENERATORS),
+        help='Dot generator class to be used')
 parser.add_argument('--camera_id', type=int, default=0,
         help='Camera id')
 parser.add_argument('--screen_id', type=int, default=0,
@@ -71,7 +91,8 @@ cv2.putText(image,
         "When you become bored press 'q' to quit",
         (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
-dot_generator = DotGenerator(image, events_log, datetime.datetime.now())
+dot_generator = DotGenerator(DOT_GENERATORS[args.dot_generator],
+        image, events_log, datetime.datetime.now())
 
 frame_count = 0
 while True:
