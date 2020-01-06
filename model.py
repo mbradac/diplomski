@@ -12,7 +12,7 @@ def build_model():
         max_pooling = MaxPooling2D(pool_size=(2, 2))(conv2)
         droput = Dropout(0.25)(max_pooling)
         flatten = Flatten()(droput)
-        dense = Dense(16)(flatten, activation="relu")
+        dense = Dense(16, activation="relu")(flatten)
         return eye_input, dense
 
     left_eye_input, left_eye_output = eye_processing_layers()
@@ -20,15 +20,15 @@ def build_model():
 
     face_points_input = Input(shape=(72, 2))
     face_points_flatten = Flatten()(face_points_input)
-    face_points_dense1 = Dense(32)(face_points_flatten, activation="relu")
-    face_points_dense2 = Dense(24)(face_points_dense1, activation="relu")
+    face_points_dense1 = Dense(32, activation="relu")(face_points_flatten)
+    face_points_dense2 = Dense(24, activation="relu")(face_points_dense1)
 
     all_data = keras.layers.concatenate(
             [face_points_dense2, left_eye_output, right_eye_output])
-    all_data_dense1 = Dense(32)(all_data, activation="relu")
-    all_data_dense2 = Dense(16)(all_data_dense1, activation="relu")
+    all_data_dense1 = Dense(32, activation="relu")(all_data)
+    all_data_dense2 = Dense(16, activation="relu"()(all_data_dense1)
     #output = Dense(2, activation='linear')(all_data_dense2)
-    output = Dense(2)(all_data_dense2, activation="softmax")
+    output = Dense(2, activation="softmax")(all_data_dense2)
 
     model = Model(inputs=[left_eye_input, right_eye_input, face_points_input],
             outputs=[output])
