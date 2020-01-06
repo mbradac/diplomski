@@ -26,7 +26,9 @@ args = parser.parse_args()
 input_names = set(map(lambda x: os.path.splitext(x)[0],
         glob.glob(args.input_name_prefix + '*')))
 
-for input_name in input_names:
+for i, input_name in enumerate(input_names):
+    if i % 100 == 0:
+        logger.info("Processing image {}/{}".format(i, len(input_names)))
     image = face_recognition.load_image_file(input_name + '.jpg')
     with open(input_name + '.json') as fp:
         image_data = json.load(fp)
@@ -44,15 +46,7 @@ for input_name in input_names:
         ys = list(map(lambda y: y[1], eye_dots))
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
-        x_shift = (max_x - min_x + 1) // 2
-        min_x -= x_shift
-        max_x += x_shift
         dimension = max_x - min_x
-        if dimension < 64:
-            t = (64 - (max_x - min_x)) // 2
-            min_x -= t
-            max_x = min_x + 64
-            dimension = 64
         y_center = (min_y + max_y) // 2
         min_y = y_center - dimension // 2
         max_y = y_center + (dimension + 1) // 2

@@ -31,7 +31,9 @@ frame_count = 0
 current_event = 0
 while True:
     ret, frame = input_video.read()
-    if not ret or current_event + 1 == num_events:
+    # Discard last few events. User was maybe not concentrated and decided to
+    # stop recording, so it makes sense to discard them.
+    if not ret or current_event + 5 >= num_events:
         break
     start_time = events[current_event]["frame_count"]
     end_time = events[current_event + 1]["frame_count"]

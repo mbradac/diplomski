@@ -44,6 +44,7 @@ class DotGenerator:
             cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
             event = {
                 "frame_count": frame_count,
+                "timepoint": str(current_time),
                 "x": self.last_dot[0], "y": self.last_dot[1],
                 "width": self.width, "height": self.height
             }
@@ -94,14 +95,15 @@ cv2.putText(image,
 dot_generator = DotGenerator(DOT_GENERATORS[args.dot_generator],
         image, events_log, datetime.datetime.now())
 
+WINDOW = "window"
+cv2.namedWindow(WINDOW, cv2.WND_PROP_FULLSCREEN)
+cv2.setWindowProperty(WINDOW, cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
+
 frame_count = 0
 while True:
     _, frame = video_capture.read()
     output_video.write(frame)
     frame_count += 1
-    WINDOW = "window"
-    cv2.namedWindow(WINDOW, cv2.WND_PROP_FULLSCREEN)
-    cv2.setWindowProperty(WINDOW, cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
     cv2.imshow(WINDOW, dot_generator.get_image(
             datetime.datetime.now(), frame_count))
     if cv2.waitKey(1) & 0xFF == ord('q'): break
