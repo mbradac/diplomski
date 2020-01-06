@@ -28,7 +28,7 @@ def build_model():
     all_data_dense1 = Dense(32)(all_data)
     all_data_dense2 = Dense(16)(all_data_dense1)
     #output = Dense(2, activation='linear')(all_data_dense2)
-    output = Dense(2)(all_data_dense2)
+    output = Dense(2)(all_data_dense2, activation="softmax")
 
     model = Model(inputs=[left_eye_input, right_eye_input, face_points_input],
             outputs=[output])
