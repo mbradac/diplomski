@@ -26,7 +26,7 @@ def build_model():
     all_data = keras.layers.concatenate(
             [face_points_dense2, left_eye_output, right_eye_output])
     all_data_dense1 = Dense(32, activation="relu")(all_data)
-    all_data_dense2 = Dense(16, activation="relu"()(all_data_dense1)
+    all_data_dense2 = Dense(16, activation="relu")(all_data_dense1)
     #output = Dense(2, activation='linear')(all_data_dense2)
     output = Dense(2, activation="softmax")(all_data_dense2)
 
