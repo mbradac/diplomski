@@ -12,8 +12,9 @@ logging.basicConfig(level='INFO')
 logger = logging.getLogger('record')
 
 def random_strategy(width, height):
-    return (random.randrange(5, width - 5),
-            random.randrange(5, height - 5))
+    x = random.randrange(5, width - 5)
+    y = random.randrange(5, height - 5)
+    return (x, y), (x, y)
 
 class LeftRightCenteredStrategy:
     def __init__(self):
@@ -22,8 +23,24 @@ class LeftRightCenteredStrategy:
     def __call__(self, width, height):
         self.last_left = not self.last_left
         if self.last_left:
-            return (width - 50, height / 2)
-        return (50, height / 2)
+            return "right", (width - 50, height / 2)
+        return "left", (50, height / 2)
+
+class NinePointsStrategy:
+    def __init__(self):
+        self.last_point_label = 0
+
+    def __call__(self, width, height):
+        xs = [50, width / 2, width - 50]
+        ys = [50, height / 2, height - 50]
+        while True:
+            x_index = random.randrange(0, 3)
+            y_index = random.randrange(0, 3)
+            label = y_index * 3 + x_index
+            if label == self.last_point_label:
+                continue
+            self.last_point_label = label
+            return label, (xs[x_index], ys[y_index])
 
 class DotGenerator:
     def __init__(self, strategy, image, events_log, start_time):
@@ -40,11 +57,12 @@ class DotGenerator:
         if current_time >= self.next_event:
             self.next_event = current_time + datetime.timedelta(seconds=1)
             cv2.circle(self.image, self.last_dot, 5, (255, 255, 255), -1)
-            self.last_dot = self.strategy(self.width, self.height)
+            label, self.last_dot = self.strategy(self.width, self.height)
             cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
             event = {
                 "frame_count": frame_count,
                 "timepoint": str(current_time),
+                "label": label,
                 "x": self.last_dot[0], "y": self.last_dot[1],
                 "width": self.width, "height": self.height
             }
@@ -52,7 +70,8 @@ class DotGenerator:
         return self.image
 
 DOT_GENERATORS = {"lr_centered": LeftRightCenteredStrategy(),
-                  "random": random_strategy}
+                  "random": random_strategy,
+                  "9points": NinePointsStrategy()}
 
 # Parse command line arguments.
 parser = ArgumentParser()
