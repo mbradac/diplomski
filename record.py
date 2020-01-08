@@ -5,6 +5,8 @@ import numpy as np
 import random
 import screeninfo
 import json
+import Tkinter as tk
+from PIL import Image, ImageTk
 from argparse import ArgumentParser
 
 # Setup logger.
@@ -43,31 +45,38 @@ class NinePointsStrategy:
             return label, (xs[x_index], ys[y_index])
 
 class DotGenerator:
-    def __init__(self, strategy, image, events_log, start_time):
-        self.image = image
-        self.height = len(image)
-        self.width = len(image[0])
+    def __init__(self, strategy, width, height, canvas, events_log, start_time):
+        self.canvas = canvas
+        self.height = height
+        self.width = width
         self.events_log = events_log
         self.next_event = start_time + datetime.timedelta(seconds=1)
         self.strategy = strategy
         # Values does not really matter since there is no dot yet.
         self.last_dot = (self.width / 2, self.height / 2)
 
+    def draw_circle(self, dot, color):
+        x, y = dot
+        r = 5
+        canvas.create_oval(x - r, y - r, x + r, y + r,
+                fill=color, outline=color)
+
     def get_image(self, current_time, frame_count):
-        if current_time >= self.next_event:
-            self.next_event = current_time + datetime.timedelta(seconds=1)
-            cv2.circle(self.image, self.last_dot, 5, (255, 255, 255), -1)
-            label, self.last_dot = self.strategy(self.width, self.height)
-            cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
-            event = {
-                "frame_count": frame_count,
-                "timepoint": str(current_time),
-                "label": label,
-                "x": self.last_dot[0], "y": self.last_dot[1],
-                "width": self.width, "height": self.height
-            }
-            self.events_log.write(json.dumps(event) + "\n")
-        return self.image
+        if current_time < self.next_event:
+            return False
+        self.next_event = current_time + datetime.timedelta(seconds=1)
+        self.draw_circle(self.last_dot, "white")
+        label, self.last_dot = self.strategy(self.width, self.height)
+        self.draw_circle(self.last_dot, "black")
+        event = {
+            "frame_count": frame_count,
+            "timepoint": str(current_time),
+            "label": label,
+            "x": self.last_dot[0], "y": self.last_dot[1],
+            "width": self.width, "height": self.height
+        }
+        self.events_log.write(json.dumps(event) + "\n")
+        return True
 
 DOT_GENERATORS = {"lr_centered": LeftRightCenteredStrategy(),
                   "random": random_strategy,
@@ -104,32 +113,35 @@ events_log = open(args.output_name + '.jsonl', 'w')
 # Create image to be shown
 screen = screeninfo.get_monitors()[args.screen_id]
 logger.info('Screen width={} height={}'.format(screen.width, screen.height))
-image = np.zeros([screen.height, screen.width, 3])
-image.fill(255)
-cv2.putText(image,
-        "Wait for dots to appear and look at them. "
-        "When you become bored press 'q' to quit",
-        (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+window = tk.Tk()
+canvas = tk.Canvas(window, width=screen.width,
+        height=screen.height, bg="white")
+canvas.create_text(300, 20, fill="black", font="Times 12",
+        text="Wait for dots to appear and look at them. "
+             "When you become bored press 'q' to quit")
+canvas.pack()
+window.update()
 
 dot_generator = DotGenerator(DOT_GENERATORS[args.dot_generator],
-        image, events_log, datetime.datetime.now())
+        screen.width, screen.height, canvas, events_log,
+        datetime.datetime.now())
 
-WINDOW = "window"
-cv2.namedWindow(WINDOW, cv2.WND_PROP_FULLSCREEN)
-cv2.setWindowProperty(WINDOW, cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
+import time
 
 frame_count = 0
 while True:
     _, frame = video_capture.read()
     output_video.write(frame)
     frame_count += 1
-    cv2.imshow(WINDOW, dot_generator.get_image(
-            datetime.datetime.now(), frame_count))
-    if cv2.waitKey(1) & 0xFF == ord('q'): break
+    if dot_generator.get_image(datetime.datetime.now(), frame_count):
+        print("Starting canvas update time: ", str(datetime.datetime.now()))
+        window.update()
+        print("Ending canvas update time: ", str(datetime.datetime.now()))
+    time.sleep(0.1)
 
 logger.info('Frame count: {}'.format(frame_count))
 
 # All done!
 video_capture.release()
-cv2.destroyAllWindows()
 events_log.close()
