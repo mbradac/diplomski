@@ -1,0 +1,2 @@
+model_checkpoint_path: "chaos2pool_9points_A__v0_weights"
+all_model_checkpoint_paths: "chaos2pool_9points_A__v0_weights"
