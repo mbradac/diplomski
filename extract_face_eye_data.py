@@ -14,7 +14,7 @@ EYE_IMAGE_SIZE = 64
 
 def extract_face_eye_data(image, do_it_faster=False):
     if do_it_faster:
-        RESIZE_FACTOR = 0.75
+        RESIZE_FACTOR = 0.6
         smaller_image = Image.fromarray(image)
         new_width = int(image.shape[1] * RESIZE_FACTOR)
         new_height = int(image.shape[0] * RESIZE_FACTOR)
@@ -39,7 +39,7 @@ def extract_face_eye_data(image, do_it_faster=False):
         ys = list(map(lambda y: y[1], eye_dots))
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
-        dimension = max_x - min_x
+        dimension = max(max_x - min_x, max_y - min_y)
         y_center = (min_y + max_y) // 2
         min_y = y_center - dimension // 2
         max_y = y_center + (dimension + 1) // 2
