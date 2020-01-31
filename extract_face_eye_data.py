@@ -12,7 +12,7 @@ import numpy as np
 EYE_IMAGE_SIZE = 64
 
 
-def extract_face_eye_data(image, do_it_faster=False):
+def extract_face_eye_data(image, context_pixels=0, do_it_faster=False):
     if do_it_faster:
         RESIZE_FACTOR = 0.6
         smaller_image = Image.fromarray(image)
@@ -25,13 +25,38 @@ def extract_face_eye_data(image, do_it_faster=False):
         for face_landmarks in face_landmark_list:
             for landmark in face_landmarks:
                 for i, point in enumerate(face_landmarks[landmark]):
+                    x, y = point
                     face_landmarks[landmark][i] = (
-                            int(point[0] / RESIZE_FACTOR),
-                            int(point[1] / RESIZE_FACTOR))
+                            int(x / RESIZE_FACTOR),
+                            int(y / RESIZE_FACTOR))
     else:
         face_landmark_list = face_recognition.face_landmarks(image)
     if not face_landmark_list: return None
-    eye_images = []
+
+    def extract(min_x, min_y, max_x, max_y, context_pixels):
+        dimension = max(max_x - min_x, max_y - min_y) + context_pixels
+        x_center = (min_x + max_x) // 2
+        y_center = (min_y + max_y) // 2
+        min_x = x_center - dimension // 2
+        max_x = x_center + (dimension + 1) // 2
+        min_y = y_center - dimension // 2
+        max_y = y_center + (dimension + 1) // 2
+        pil_image = Image.fromarray(image[min_y:max_y, min_x:max_x])
+        pil_image = pil_image.resize(
+                (EYE_IMAGE_SIZE, EYE_IMAGE_SIZE), Image.BILINEAR)
+        return pil_image
+
+    face_min_x, face_min_y, face_max_x, face_max_y = 100000, 100000, 0, 0
+    for face_landmarks in face_landmark_list:
+        for landmark in face_landmarks:
+            for x, y in face_landmarks[landmark]:
+                face_min_x = min(face_min_x, x)
+                face_min_y = min(face_min_y, y)
+                face_max_x = max(face_max_x, x)
+                face_max_y = max(face_max_y, y)
+
+    images = [("face", extract(face_min_x, face_min_y, face_max_x,
+        face_max_y, context_pixels))]
 
     for eye_name in ('left_eye', 'right_eye'):
         eye_dots = face_landmark_list[0][eye_name]
@@ -39,16 +64,10 @@ def extract_face_eye_data(image, do_it_faster=False):
         ys = list(map(lambda y: y[1], eye_dots))
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
-        dimension = max(max_x - min_x, max_y - min_y)
-        y_center = (min_y + max_y) // 2
-        min_y = y_center - dimension // 2
-        max_y = y_center + (dimension + 1) // 2
-        pil_image = Image.fromarray(image[min_y:max_y, min_x:max_x])
-        pil_image = pil_image.resize(
-                (EYE_IMAGE_SIZE, EYE_IMAGE_SIZE), Image.BILINEAR)
-        eye_images.append((eye_name, pil_image))
+        images.append((eye_name,
+            extract(min_x, min_y, max_x, max_y, context_pixels)))
 
-    return face_landmark_list[0], eye_images
+    return face_landmark_list[0], images
 
 
 if __name__ == "__main__":
@@ -73,16 +92,19 @@ if __name__ == "__main__":
             logger.info("Processing image {}/{}".format(i, len(input_names)))
 
         image = face_recognition.load_image_file(input_name + '.jpg')
-        data = extract_face_eye_data(image)
-        if data is None: continue
-        face_landmarks, eye_images = data
+        for context_pixels in (10, 5, 0, -5):
+            data = extract_face_eye_data(image, context_pixels)
+            if data is None: continue
+            face_landmarks, images = data
 
-        with open(input_name + '.json') as fp:
-            image_data = json.load(fp)
+            with open(input_name + '.json') as fp:
+                image_data = json.load(fp)
 
-        name = os.path.join(args.output_folder, os.path.basename(input_name))
-        image_data['landmarks'] = face_landmarks
-        for eye_name, pil_image in eye_images:
-            with open(name + '.json', 'w') as fp:
-                fp.write(json.dumps(image_data) + '\n')
-            pil_image.save(name + '_' + eye_name[0] + '.jpg')
+            name = os.path.join(args.output_folder,
+                    "context{}__".format(context_pixels) +
+                        os.path.basename(input_name))
+            image_data['landmarks'] = face_landmarks
+            for feature_name, pil_image in images:
+                with open(name + '.json', 'w') as fp:
+                    fp.write(json.dumps(image_data) + '\n')
+                pil_image.save(name + '_' + feature_name[0] + '.jpg')
