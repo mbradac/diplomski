@@ -50,7 +50,7 @@ class ImageDrawer:
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
         cv2.putText(self.image, "Uneseni tekst: " + central_text,
                 (self.width / 2 - 400, self.height / 2 - 50),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
         x = xs[dot_index % 3]
         y = ys[dot_index / 3]
