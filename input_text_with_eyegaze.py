@@ -24,12 +24,6 @@ class ImageDrawer:
         self.width = screen.width
         self.image = np.zeros([self.height, self.width, 3], dtype="uint8")
         self.image.fill(255)
-        cv2.putText(self.image,
-                "look at the point you want and it will turn red. "
-                "when you become bored press 'q' to quit",
-                (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
-        # Values does not really matter since no dot is looked at the start
-        #self.last_dot = (self.width / 2, self.height / 2)
 
     def get_image(self, dot_index, do_input_point,
             central_text, dot_labels, frame):
@@ -47,10 +41,15 @@ class ImageDrawer:
         for xi, x in enumerate(xs):
             for yi, y in enumerate(ys):
                 i = yi * 3 + xi
-                cv2.circle(self.image, (x, y), 5, (0, 0, 0), -1)
+                xshift = [0, 0, -50][xi]
+                yshift = [40, 40, -30][yi]
+                cv2.circle(self.image, (x, y), 15, (0, 0, 0), -1)
                 cv2.putText(self.image, dot_labels[i],
-                        (x, y + 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
-        cv2.putText(self.image, central_text, (self.width / 2, self.height / 2 - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+                        (x + xshift, y + yshift),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+        cv2.putText(self.image, "Uneseni tekst: " + central_text,
+                (self.width / 2 - 400, self.height / 2 - 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
 
         #cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
         x = xs[dot_index % 3]
@@ -58,7 +57,7 @@ class ImageDrawer:
         #self.last_dot = (x, y)
 
         dot_color = (0, 255, 0) if do_input_point else (0, 0, 255)
-        cv2.circle(self.image, (x, y), 15, dot_color, -1)
+        cv2.circle(self.image, (x, y), 20, dot_color, -1)
         return self.image
 
 

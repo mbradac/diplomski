@@ -20,15 +20,11 @@ class ImageDrawer:
         self.width = screen.width
         self.image = np.zeros([self.height, self.width, 3], dtype="uint8")
         self.image.fill(255)
-        cv2.putText(self.image,
-                "Look at the point you want and it will turn red. "
-                "When you become bored press 'q' to quit",
-                (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         # Values does not really matter since no dot is looked at the start
         self.last_dot = (self.width / 2, self.height / 2)
 
     def select_dot(self, dot_index, frame):
-        cv2.circle(self.image, self.last_dot, 15, (255, 255, 255), -1)
+        cv2.circle(self.image, self.last_dot, 20, (255, 255, 255), -1)
 
         new_width = int(self.image.shape[1] * 0.25)
         new_height = int(float(new_width) / frame.shape[1] * frame.shape[0])
@@ -39,14 +35,14 @@ class ImageDrawer:
         ys = [50, self.height / 2, self.height - 50]
         for x in xs:
             for y in ys:
-                cv2.circle(self.image, (x, y), 5, (0, 0, 0), -1)
+                cv2.circle(self.image, (x, y), 15, (0, 0, 0), -1)
 
-        cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
+        cv2.circle(self.image, self.last_dot, 15, (0, 0, 0), -1)
         x = xs[dot_index % 3]
         y = ys[dot_index / 3]
         self.last_dot = (x, y)
 
-        cv2.circle(self.image, self.last_dot, 15, (0, 0, 255), -1)
+        cv2.circle(self.image, self.last_dot, 20, (0, 0, 255), -1)
         return self.image
 
 # Parse command line arguments.
