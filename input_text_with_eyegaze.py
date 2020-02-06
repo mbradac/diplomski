@@ -28,7 +28,8 @@ class ImageDrawer:
     def get_image(self, dot_index, do_input_point,
             central_text, dot_labels, frame):
         self.image.fill(255)
-        #cv2.circle(self.image, self.last_dot, 15, (255, 255, 255), -1)
+        cv2.putText(self.image, "Press 'q' to quit",
+                (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
         new_width = int(self.image.shape[1] * 0.25)
         new_height = int(float(new_width) / frame.shape[1] * frame.shape[0])
@@ -51,10 +52,8 @@ class ImageDrawer:
                 (self.width / 2 - 400, self.height / 2 - 50),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
 
-        #cv2.circle(self.image, self.last_dot, 5, (0, 0, 0), -1)
         x = xs[dot_index % 3]
         y = ys[dot_index / 3]
-        #self.last_dot = (x, y)
 
         dot_color = (0, 255, 0) if do_input_point else (0, 0, 255)
         cv2.circle(self.image, (x, y), 20, dot_color, -1)
@@ -82,7 +81,7 @@ WINDOW = "window"
 cv2.namedWindow(WINDOW, cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty(WINDOW, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-model = ml.Chaos2Pool.build_model()
+model = ml.Chaos2PoolFaceImage.build_model()
 model.load_weights(args.model_checkpoints)
 logger.info("Model loaded")
 
@@ -96,27 +95,23 @@ while True:
     current_time = datetime.datetime.now()
     # Convert from BGR (opencv) to RGB (face_recognition)
     dlib_frame = frame[:, :, ::-1]
-    data = extract_face_eye_data(dlib_frame, do_it_faster=True)
+    data = extract_face_eye_data(
+            dlib_frame, context_pixels=5, do_it_faster=True)
     if data is None:
         selected_points.append((current_time, -1))
         continue
-    face_landmarks, eye_images = data
+    _, images = data
 
     # Convert from pil to tensorflow format
-    eye_images = eye_images[1:]
-    left_eye_pil_image = eye_images[0][1]
-    right_eye_pil_image = eye_images[1][1]
+    faces_pil_image = images[0][1]
+    left_eye_pil_image = images[1][1]
+    right_eye_pil_image = images[2][1]
+    faces = np.array(faces_pil_image)[:, :, 0:3] / 255.
     left_eye = np.array(left_eye_pil_image)[:, :, 0:3] / 255.
     right_eye = np.array(right_eye_pil_image)[:, :, 0:3] / 255.
 
-    points = []
-    for landmark in sorted(face_landmarks):
-        for x, y in face_landmarks[landmark]:
-            points.append((x / float(width), y / float(height)))
-    points = np.array(points)
-
     probabilities = model.predict([np.array([left_eye]),
-        np.array([right_eye]), np.array([points])])
+        np.array([right_eye]), np.array([faces])])
     dot_index = np.argmax(probabilities)
 
     selected_points.append((current_time, dot_index))

@@ -20,6 +20,10 @@ class ImageDrawer:
         self.width = screen.width
         self.image = np.zeros([self.height, self.width, 3], dtype="uint8")
         self.image.fill(255)
+        cv2.putText(self.image,
+                "Look at the point you want and it will turn red. "
+                "When you become bored press 'q' to quit",
+                (15, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
         # Values does not really matter since no dot is looked at the start
         self.last_dot = (self.width / 2, self.height / 2)
 
@@ -66,7 +70,7 @@ WINDOW = "window"
 cv2.namedWindow(WINDOW, cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty(WINDOW, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
-model = ml.Chaos2Pool.build_model()
+model = ml.Chaos2PoolFaceImage.build_model()
 model.load_weights(args.model_checkpoints)
 logger.info("Model loaded")
 
@@ -76,25 +80,21 @@ while True:
     _, frame = video_capture.read()
     # Convert from BGR (opencv) to RGB (face_recognition)
     dlib_frame = frame[:, :, ::-1]
-    data = extract_face_eye_data(dlib_frame, do_it_faster=True)
+    data = extract_face_eye_data(
+            dlib_frame, context_pixels=5, do_it_faster=True)
     if data is None: continue
-    face_landmarks, eye_images = data
+    _, images = data
 
     # Convert from pil to tensorflow format
-    eye_images = eye_images[1:]
-    left_eye_pil_image = eye_images[0][1]
-    right_eye_pil_image = eye_images[1][1]
+    faces_pil_image = images[0][1]
+    left_eye_pil_image = images[1][1]
+    right_eye_pil_image = images[2][1]
+    faces = np.array(faces_pil_image)[:, :, 0:3] / 255.
     left_eye = np.array(left_eye_pil_image)[:, :, 0:3] / 255.
     right_eye = np.array(right_eye_pil_image)[:, :, 0:3] / 255.
 
-    points = []
-    for landmark in sorted(face_landmarks):
-        for x, y in face_landmarks[landmark]:
-            points.append((x / float(width), y / float(height)))
-    points = np.array(points)
-
     probabilities = model.predict([np.array([left_eye]),
-        np.array([right_eye]), np.array([points])])
+        np.array([right_eye]), np.array([faces])])
     dot_index = np.argmax(probabilities)
 
     cv2.imshow(WINDOW, image_drawer.select_dot(dot_index, frame))
