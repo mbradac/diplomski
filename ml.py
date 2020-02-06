@@ -101,9 +101,9 @@ def load_9point_dataset(input_name_prefixes, shuffle=True):
 def train_9points_dataset(
         input_name_prefixes, test_input_name_prefixes):
     face_points, left_eyes, right_eyes, faces, ys = \
-            load_9point_dataset(input_name_prefix)
+            load_9point_dataset(input_name_prefixes)
 
-    if test_input_name_prefix is None:
+    if test_input_name_prefixes is None:
         size = len(face_points)
         train_size = int(0.8 * size)
         face_points_train, face_points_test = \
@@ -122,7 +122,7 @@ def train_9points_dataset(
         faces_train = faces
         ys_train = ys
         face_points_test, left_eyes_test, right_eyes_test, faces_test, ys_test = \
-                load_9point_dataset(test_input_name_prefix)
+                load_9point_dataset(test_input_name_prefixes)
 
     model = Chaos2PoolFaceImage.build_model()
     model.summary()
@@ -135,13 +135,13 @@ def train_9points_dataset(
             validation_data=(
                 [left_eyes_test, right_eyes_test, faces_test], [ys_test]))
 
-    if test_input_name_prefix is None:
+    if test_input_name_prefixes is None:
         trained_model_path_template = "checkpoints/{}_{}__split_v2_weights"
     else:
         trained_model_path_template = "checkpoints/{}_{}__all_v2_weights"
     trained_model_path  = trained_model_path_template.format(
             Chaos2PoolFaceImage.NAME, "-".join(
-                map(lambda x: os.path.basename(x), input_name_prefix)))
+                map(lambda x: os.path.basename(x), input_name_prefixes)))
     script_dir = os.path.dirname(os.path.realpath(__file__))
     model_full_path = os.path.join(script_dir, trained_model_path)
     model.save_weights(model_full_path)
